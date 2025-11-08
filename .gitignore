@@ -1,0 +1,27 @@
+# Logs
+*.log
+logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Scan results (if local copies)
+scan_results/
+*.xml
+*.nmap
+
+# Environment variables
+.env
+.env.local
+
+# Obsidian vault (external)
+# Don't include the actual vault, just the scripts
