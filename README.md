@@ -1,89 +1,42 @@
 # Security Scanning Automation
 
-Automated network security scanning system that performs monthly assessments of your public-facing network and generates security reports in Obsidian.
+Automated monthly network security scanning that checks your public IP for exposed ports and saves a markdown report you can review over time.
 
-## Overview
+> **Authorization reminder:** Only scan networks and IP addresses you own or are explicitly authorized to test. Unauthorized port scanning may be illegal in your jurisdiction.
 
-This project uses `nmap` to scan your public IP address for open ports and potential vulnerabilities. It generates detailed markdown reports with security ratings, analysis, and recommendations, automatically saved to your Obsidian vault for tracking over time.
+---
 
-## Features
-
-- **Automated Port Scanning**: Scans top 100 ports on your public IP
-- **Security Rating System**: 10-point scale with clear status indicators
-- **Service Detection**: Identifies services running on detected ports
-- **Risk Analysis**: Categorizes ports by security risk level
-- **Historical Tracking**: Month-over-month comparison capability
-- **Actionable Recommendations**: Specific steps to improve security posture
-- **Obsidian Integration**: Markdown reports with task lists and wikilinks
-
-## Security Rating Scale
-
-- **EXCELLENT (10/10)**: No open ports, all filtered
-- **GOOD (8/10)**: No open ports detected
-- **FAIR (6/10)**: 1-2 open ports (needs review)
-- **POOR (3/10)**: 3+ open ports (immediate action required)
-
-## Project Structure
-
-```
-security-scanning/
-├── scripts/
-│   └── monthly-security-scan.sh   # Main scanning script
-├── logs/                           # Execution logs (created at runtime)
-└── README.md
-```
-
-## Prerequisites
-
-- **nmap**: Network scanning utility
-- **curl**: For retrieving public IP address
-- macOS or Linux operating system
-
-### Install nmap (macOS)
+## Quick start
 
 ```bash
-brew install nmap
-```
+# 1. Clone the repo
+git clone https://github.com/Scargiver-cyber/security-scanning.git
+cd security-scanning
 
-### Install nmap (Linux)
+# 2. Install nmap (if not already installed)
+brew install nmap          # macOS
+# sudo apt-get install nmap  # Debian/Ubuntu
+# sudo yum install nmap      # RHEL/CentOS
 
-```bash
-# Debian/Ubuntu
-sudo apt-get install nmap
+# 3. (Optional) Set a custom report destination — defaults to ~/security-reports
+export OBSIDIAN_VAULT="$HOME/Documents/SecurityReports"
 
-# RHEL/CentOS
-sudo yum install nmap
-```
-
-## Installation
-
-1. Ensure nmap is installed
-2. Make script executable:
-```bash
+# 4. Make the script executable
 chmod +x scripts/monthly-security-scan.sh
-```
 
-3. Configure Obsidian vault path in script:
-```bash
-OBSIDIAN_VAULT="/path/to/your/Cyber Vault/Network Scan"
-```
-
-## Usage
-
-### Manual Execution
-
-```bash
+# 5. Run it
 ./scripts/monthly-security-scan.sh
 ```
 
 Expected output:
+
 ```
 Getting public IP address...
 Scanning IP: XXX.XXX.XXX.XXX
 Running nmap scan (this may take 1-2 minutes)...
 
 ✅ Scan complete!
-📄 Report saved to: [vault]/Network Scan/2025-11-08 Security Scan Report.md
+📄 Report saved to: /home/you/security-reports/2025-11-08 Security Scan Report.md
 
 Summary:
   IP Address:      XXX.XXX.XXX.XXX
@@ -92,11 +45,37 @@ Summary:
   Filtered Ports:  5
 ```
 
-### Automated Scheduling (macOS launchd)
+---
 
-Create a launch agent for monthly execution:
+## Make it yours
 
-**File**: `~/Library/LaunchAgents/com.security-scan.monthly.plist`
+The only variable you need to change is `OBSIDIAN_VAULT`. You can set it in your shell before running:
+
+```bash
+# Before (default — saves to ~/security-reports)
+./scripts/monthly-security-scan.sh
+
+# After (save to your Obsidian vault, Dropbox, or any folder)
+OBSIDIAN_VAULT="$HOME/Documents/Obsidian/Security" ./scripts/monthly-security-scan.sh
+```
+
+Or add it to your shell profile (`~/.bashrc`, `~/.zshrc`) so it's always set:
+
+```bash
+export OBSIDIAN_VAULT="$HOME/Documents/Obsidian/Security"
+```
+
+The folder is created automatically if it does not exist.
+
+---
+
+## Automated scheduling
+
+### macOS (launchd)
+
+Create a launch agent for monthly execution.
+
+**File:** `~/Library/LaunchAgents/com.security-scan.monthly.plist`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -109,7 +88,7 @@ Create a launch agent for monthly execution:
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/[username]/ai-terminal/projects/security-scanning/scripts/monthly-security-scan.sh</string>
+        <string>/Users/YOUR_USERNAME/security-scanning/scripts/monthly-security-scan.sh</string>
     </array>
 
     <key>StartCalendarInterval</key>
@@ -123,224 +102,199 @@ Create a launch agent for monthly execution:
     </dict>
 
     <key>StandardOutPath</key>
-    <string>/Users/[username]/security_scan.log</string>
+    <string>/Users/YOUR_USERNAME/security_scan.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/[username]/security_scan_error.log</string>
+    <string>/Users/YOUR_USERNAME/security_scan_error.log</string>
 </dict>
 </plist>
 ```
 
-Load the agent:
+Replace `YOUR_USERNAME` with your actual username (`whoami` to find it), then load the agent:
+
 ```bash
 launchctl load ~/Library/LaunchAgents/com.security-scan.monthly.plist
 ```
 
-### Automated Scheduling (Linux cron)
+### Linux (cron)
 
-Add to crontab:
 ```bash
+# Open crontab
+crontab -e
+
 # Run on the 1st of each month at 9:00 AM
-0 9 1 * * /path/to/security-scanning/scripts/monthly-security-scan.sh
+0 9 1 * * /home/YOUR_USERNAME/security-scanning/scripts/monthly-security-scan.sh
 ```
 
-## Report Format
+---
 
-### Report Sections
+## What the reports look like
 
-1. **Header**: Date, IP, hostname, security rating
-2. **Quick Summary**: Port counts at a glance
-3. **Detailed Scan Results**: Raw nmap output
-4. **Security Analysis**: Port-by-port breakdown with risk levels
-5. **Recommendations**: Specific actions based on findings
-6. **Historical Comparison**: How to track changes over time
-7. **Related Notes**: Wikilinks to relevant security documentation
-8. **Next Actions**: Checklist of follow-up tasks
+Each scan produces a markdown file named `YYYY-MM-DD Security Scan Report.md` in your report folder. Sections include:
 
-### Example Report Output
+1. **Header** — date, IP, hostname, security rating
+2. **Quick Summary** — open / filtered / closed port counts at a glance
+3. **Detailed Scan Results** — raw nmap output
+4. **Security Analysis** — port-by-port breakdown with risk levels
+5. **Recommendations** — specific actions based on findings
+6. **Historical Comparison** — how to track changes over time
+7. **Next Actions** — checklist of follow-up tasks
 
-```markdown
-# Network Security Scan Report
+### Security rating scale
 
-**Date:** November 08, 2025 at 12:00 PM
-**Target IP:** 203.0.113.42
-**Security Rating:** EXCELLENT ✅ (10/10)
+| Rating | Score | Meaning |
+|---|---|---|
+| EXCELLENT ✅ | 10/10 | No open ports, all filtered |
+| GOOD ✅ | 8/10 | No open ports detected |
+| FAIR ⚠️ | 6/10 | 1–2 open ports (needs review) |
+| POOR 🚨 | 3/10 | 3+ open ports (immediate action required) |
 
 ---
 
-## 🔍 Quick Summary
+## Scan parameters
 
-Open Ports:     0
-Filtered Ports: 5
-Closed Ports:   95
+The script runs:
 
----
-
-## 🛡️ Security Analysis
-
-**Port 80 (http):** filtered - ✅ Good
-- *Action:* Firewall is protecting this port
-
-**Port 443 (https):** filtered - ✅ Good
-- *Action:* Firewall is protecting this port
-
----
-
-## 💡 Recommendations
-
-✅ **Excellent security posture!** No action required.
-
-### Monthly Maintenance:
-- Review this report for any changes from previous month
-- Verify no new ports have been opened
-- Keep firewall enabled
-- Avoid unnecessary port forwarding
+```
+nmap -Pn -sV -T4 --top-ports 100 <your-public-IP>
 ```
 
-## Scan Parameters
+| Flag | Purpose |
+|---|---|
+| `-Pn` | Skip host discovery (assume host is online) |
+| `-sV` | Service version detection |
+| `-T4` | Aggressive timing (faster scan) |
+| `--top-ports 100` | Scan the 100 most common ports |
 
-The script uses the following nmap options:
+Common ports scanned include HTTP/HTTPS (80, 443), SSH (22), FTP (21), email (25, 587), databases (3306, 5432), RDP (3389), and more.
 
-- `-Pn`: Skip host discovery (assume host is online)
-- `-sV`: Service version detection
-- `-T4`: Aggressive timing (faster scan)
-- `--top-ports 100`: Scan the 100 most common ports
+---
 
-### Ports Scanned
+## Understanding the results
 
-The top 100 ports include common services like:
-- HTTP/HTTPS (80, 443, 8080, 8443)
-- SSH (22)
-- FTP (21)
-- SMTP/Email (25, 587, 465)
-- DNS (53)
-- Database ports (3306, 5432, 27017)
-- RDP (3389)
-- And 83 more...
+### Port states
 
-## Understanding Results
+- **OPEN** 🔴 — A service is actively accepting connections. This is a potential attack surface. Verify it is intentional and close it if not.
+- **FILTERED** 🟡 — A firewall is blocking or filtering packets. This is normal and expected on most home networks.
+- **CLOSED** 🟢 — No service is listening. The ideal state.
 
-### Port States
+### Ports that need attention if open
 
-- **OPEN** 🔴: A service is actively accepting connections
-  - **Risk**: Potential attack vector
-  - **Action**: Verify if needed, close if unnecessary
+| Port | Service | Why it matters |
+|---|---|---|
+| 22 | SSH | Remote access — use key-based auth, not passwords |
+| 80 / 443 | HTTP/HTTPS | Web server — verify it is intentional |
+| 3389 | RDP | Windows Remote Desktop — high risk if exposed |
+| 21 | FTP | Insecure protocol — consider closing |
+| 23 | Telnet | No encryption — close immediately |
+| 3306 | MySQL | Database — should never be public |
+| 5432 | PostgreSQL | Database — should never be public |
 
-- **FILTERED** 🟡: Firewall is blocking or filtering packets
-  - **Risk**: Low (protected by firewall)
-  - **Action**: This is normal for home networks with NAT/firewall
+---
 
-- **CLOSED** 🟢: No service is listening on this port
-  - **Risk**: None
-  - **Action**: Ideal state, no action needed
+## Advanced usage
 
-### Common Open Ports to Investigate
+### Scan a specific IP instead of your public one
 
-If found open, these require immediate review:
+Edit line ~32 of the script or set the IP directly:
 
-- **Port 22 (SSH)**: Remote access - ensure strong passwords/keys
-- **Port 80/443 (HTTP/HTTPS)**: Web server - verify if intentional
-- **Port 3389 (RDP)**: Windows Remote Desktop - high-risk if exposed
-- **Port 21 (FTP)**: Insecure file transfer - consider closing
-- **Port 23 (Telnet)**: Extremely insecure - close immediately
-- **Port 3306 (MySQL)**: Database - should never be public
-- **Port 5432 (PostgreSQL)**: Database - should never be public
+```bash
+# Inside the script, replace the curl line with:
+PUBLIC_IP="192.0.2.1"   # Use your own authorized IP
+```
+
+### Full port scan (slower but more thorough)
+
+```bash
+# Replace --top-ports 100 with -p-
+nmap -Pn -sV -T4 -p- YOUR_IP
+```
+
+### Include OS detection (requires sudo on macOS)
+
+```bash
+sudo nmap -Pn -sV -O -T4 --top-ports 100 YOUR_IP
+```
+
+---
 
 ## Troubleshooting
 
-### Error: Could not determine public IP
+### "Could not determine public IP"
 
-- Check internet connection
-- Verify `curl` is installed
-- Try alternative IP service: `curl -s ifconfig.me`
+- Check your internet connection.
+- Verify `curl` is installed: `curl --version`
+- Try an alternative: `curl -s ifconfig.me`
 
-### Permission denied errors
+### "Permission denied"
 
-Ensure script is executable:
+Make the script executable:
+
 ```bash
 chmod +x scripts/monthly-security-scan.sh
 ```
 
-### nmap: command not found
+### "nmap: command not found"
 
 Install nmap:
-```bash
-brew install nmap  # macOS
-```
-
-### Scan takes too long
-
-The script uses `-T4` (aggressive timing). If it's still slow:
-- Use fewer ports: Change `--top-ports 100` to `--top-ports 20`
-- Check network connectivity
-- Verify your ISP isn't rate-limiting
-
-### Reports not appearing in Obsidian
-
-- Verify `OBSIDIAN_VAULT` path is correct
-- Ensure write permissions to vault directory
-- Check if vault is syncing (iCloud, Dropbox)
-- Manually create "Network Scan" folder in vault
-
-## Best Practices
-
-1. **Run Monthly**: Track changes in your security posture over time
-2. **Compare Results**: Look for new open ports or changes in service versions
-3. **Document Changes**: If you intentionally open ports, document why
-4. **Act on Findings**: Don't ignore POOR or FAIR ratings
-5. **Follow Up**: Complete the "Next Actions" checklist in each report
-
-## Security Considerations
-
-- This tool scans your **public IP** as seen from the internet
-- It shows what external attackers could potentially discover
-- Internal network scans require different tools and permissions
-- Always have authorization before scanning any network
-- Your ISP may flag aggressive scanning activity
-
-## Advanced Usage
-
-### Scan a specific IP
 
 ```bash
-# Edit script to replace PUBLIC_IP line
-PUBLIC_IP="192.168.1.1"  # Instead of curl command
+brew install nmap          # macOS
+sudo apt-get install nmap  # Debian/Ubuntu
 ```
 
-### Full port scan (slower but comprehensive)
+### Reports not appearing in the expected folder
+
+- Check that `OBSIDIAN_VAULT` points to the right place: `echo $OBSIDIAN_VAULT`
+- Confirm the folder exists and is writable: `ls -la "$OBSIDIAN_VAULT"`
+- If using iCloud or Dropbox sync, allow a moment for the file to appear.
+
+### Scan takes longer than expected
+
+The `-T4` flag is already aggressive. If it still takes too long:
 
 ```bash
-# Replace --top-ports 100 with -p-
-nmap -Pn -sV -T4 -p- $PUBLIC_IP
+# Scan fewer ports
+nmap -Pn -sV -T4 --top-ports 20 YOUR_IP
 ```
 
-### Include OS detection
+---
 
-```bash
-# Add -O flag (requires sudo on macOS)
-sudo nmap -Pn -sV -O -T4 --top-ports 100 $PUBLIC_IP
+## Security and ethics
+
+- This script scans your **public IP** — what an outside attacker would see from the internet.
+- It does not scan your internal (LAN) network. That requires different tools and permissions.
+- **Never run this against an IP you do not own or have written authorization to test.**
+- Your ISP may flag aggressive scanning activity. `-T4` is moderate; `-T5` is more likely to trigger alerts.
+
+---
+
+## Project structure
+
+```
+security-scanning/
+├── scripts/
+│   └── monthly-security-scan.sh   # Main scanning script
+├── logs/                           # Execution logs (created at runtime, gitignored)
+├── LICENSE
+└── README.md
 ```
 
-## Contributing
-
-This is a personal project, but suggestions and improvements are welcome.
+---
 
 ## License
 
-Personal use project. Modify as needed for your security scanning needs.
+[MIT](LICENSE) — Copyright (c) 2026 Jason Tilson
 
-## Disclaimer
-
-- Only scan networks you own or have explicit permission to scan
-- Unauthorized port scanning may be illegal in your jurisdiction
-- This tool is for defensive security monitoring only
-- The author assumes no liability for misuse
+---
 
 ## Author
 
-Jason Tilson - Cybersecurity professional focusing on defensive security and network hardening
+Jason Tilson — [github.com/Scargiver-cyber](https://github.com/Scargiver-cyber)
 
-## Related Projects
+---
 
-- [cyber-news-automation](../cyber-news-automation/) - Automated security news aggregation
-- [password-security-toolkit](../password-security-toolkit/) - Password security analysis tools
+## Related projects
+
+- [cyber-news-automation](https://github.com/Scargiver-cyber/cyber-news-automation) — automated security news aggregation
+- [password-security-toolkit](https://github.com/Scargiver-cyber/password-security-toolkit) — password security analysis tools
